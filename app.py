@@ -6,7 +6,10 @@ from sqlalchemy import create_engine, text
 
 st.set_page_config(page_title="FloodConnect", layout="wide")
 
+
 DB_URL = st.secrets["DB_URL"]
+if DB_URL.startswith("postgresql://"):
+    DB_URL = DB_URL.replace("postgresql://", "postgresql+psycopg2://", 1)
 engine = create_engine(DB_URL)
 
 PRECAUTIONS = {
