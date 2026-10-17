@@ -767,9 +767,22 @@ def visible_pages():
 
 def main():
     try:
-        store.df(get_engine(), "SELECT 1 FROM AlertNotice LIMIT 1")
-    except Exception:
-        st.error("The database has not been upgraded to FloodConnect v2 yet. Run `python migrate.py` once (see README), then reload.")
+        eng = get_engine()
+    except Exception as e:
+        st.error("The app could not read its database secret. In Streamlit Cloud open Manage app > Settings > Secrets and make sure it contains a line like: DB_URL = \"postgresql://...\"")
+        with st.expander("Technical details"):
+            st.code(f"{type(e).__name__}: {str(e)[:300]}")
+        st.stop()
+    try:
+        store.df(eng, "SELECT 1 FROM AlertNotice LIMIT 1")
+    except Exception as e:
+        text_ = str(e)
+        if "does not exist" in text_ or "UndefinedTable" in text_:
+            st.error("The database has not been upgraded to FloodConnect v2 yet. Run migrate.py once (see README), then reload.")
+        else:
+            st.error("The app could not connect to the database. Check the DB_URL secret and that your Supabase project is running (free projects pause after inactivity).")
+        with st.expander("Technical details"):
+            st.code(f"{type(e).__name__}: {text_.splitlines()[0][:300] if text_ else ''}")
         st.stop()
 
     if "_nav_next" in st.session_state:          # menu changes requested by a page (login/logout)
